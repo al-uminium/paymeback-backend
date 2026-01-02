@@ -1,0 +1,12 @@
+package paymeback.backend.domain;
+
+public enum EventType {
+  EXPENSE_CREATED,
+  EXPENSE_EDITED,
+  EXPENSE_DELETED,
+  GROUP_CREATED,
+  GROUP_EDITED,
+  MEMBER_ADDED,
+  MEMBER_REMOVED,
+  MEMBER_PAID
+}
