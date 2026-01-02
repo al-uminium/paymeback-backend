@@ -1,6 +1,7 @@
 package paymeback.backend.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -31,6 +32,7 @@ public class Settlement {
   @Column(name = "currency", length = 3)
   private Currency currency;
 
+  @CreationTimestamp
   @Column(name = "settlement_ts")
   private Instant createdTs;
 

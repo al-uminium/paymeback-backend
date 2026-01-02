@@ -2,6 +2,7 @@ package paymeback.backend.domain;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.util.Currency;
@@ -26,9 +27,11 @@ public class ExpenseGroup {
   @Column(name = "group_default_currency")
   private Currency defaultCurrency;
 
+  @CreationTimestamp
   @Column(name = "group_created_ts")
   private Instant createdTs;
 
+  @CreationTimestamp
   @Column(name = "group_last_activity_ts")
   private Instant lastActivityTs;
 

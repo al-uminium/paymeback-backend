@@ -1,6 +1,7 @@
 package paymeback.backend.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -26,6 +27,7 @@ public class AuditLog {
   @Column(name = "log_message")
   private String message;
 
+  @CreationTimestamp
   @Column(name = "log_ts")
   private Instant createdTs;
 }

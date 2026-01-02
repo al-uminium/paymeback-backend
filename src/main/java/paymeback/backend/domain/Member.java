@@ -2,6 +2,8 @@ package paymeback.backend.domain;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -23,8 +25,9 @@ public class Member {
   private String name;
 
   @Column(name = "member_status")
-  private String status;
+  private String status = "ACTIVE";
 
+  @CreationTimestamp
   @Column(name = "member_created_ts")
   private Instant createdTs;
 

@@ -1,6 +1,7 @@
 package paymeback.backend.domain;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -34,6 +35,7 @@ public class Expense {
   @Column(name = "expense_date")
   private LocalDate createdDate; // when the expense was made
 
+  @CreationTimestamp
   @Column(name = "expense_created_ts")
   private Instant createdTs; // when the expense was stored in DB
 
