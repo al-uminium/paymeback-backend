@@ -8,9 +8,11 @@ import paymeback.backend.dto.CreateGroupAndMembersDTO;
 import paymeback.backend.dto.MemberDTO;
 import paymeback.backend.dto.response.GroupDetailsResponse;
 import paymeback.backend.exception.GroupNotFoundException;
+import paymeback.backend.exception.MemberNotFoundException;
 import paymeback.backend.repository.ExpenseGroupRepository;
 import paymeback.backend.repository.MemberRepository;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -107,5 +109,31 @@ public class GroupManagementService {
     }
 
     return response;
+  }
+
+  public Member softDelete(UUID memberId) {
+    Optional<Member> optMember = this.memberRepository.findById(memberId);
+    if (optMember.isEmpty()) {
+      throw new MemberNotFoundException("Cannot find member with id: ".concat(memberId.toString()));
+    } else {
+      Member member = optMember.get();
+      member.setRemovedTs(Instant.now());
+      member.setStatus("INACTIVE");
+      this.memberRepository.save(member);
+      return member;
+    }
+  }
+
+  // decided not to merge soft delete and update so it's clearer what is being done.
+  public Member updateMember(UUID memberId, MemberDTO memberDTO) {
+    Optional<Member> optMember = this.memberRepository.findById(memberId);
+    if (optMember.isEmpty()) {
+      throw new MemberNotFoundException("Cannot find member with id: ".concat(memberId.toString()));
+    } else {
+      Member member = optMember.get();
+      member.setName(memberDTO.getName());
+      this.memberRepository.save(member);
+      return member;
+    }
   }
 }

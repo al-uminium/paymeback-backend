@@ -58,4 +58,22 @@ public class ExpenseGroupController {
 
     return new ResponseEntity<>(members, HttpStatus.OK);
   }
+
+  @PutMapping("/member/{memberId}")
+  public ResponseEntity<Member> updateMember(
+      @PathVariable("memberId") UUID memberId,
+      @RequestParam(name = "softDelete", defaultValue = "false") boolean isSoftDelete,
+      @RequestBody(required = false) MemberDTO memberDTO
+  ) {
+    Member member;
+    if (isSoftDelete) {
+      member = this.groupService.softDelete(memberId);
+    } else {
+      if (memberDTO == null) {
+        throw new IllegalArgumentException("Member name is required for update");
+      }
+      member = this.groupService.updateMember(memberId, memberDTO);
+    }
+    return new ResponseEntity<>(member, HttpStatus.OK);
+  }
 }

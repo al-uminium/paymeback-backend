@@ -3,9 +3,9 @@ package paymeback.backend.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.NO_CONTENT)
-public class GroupNotFoundException extends RuntimeException{
-  public GroupNotFoundException(String message) {
+@ResponseStatus(HttpStatus.NOT_FOUND)
+public class MemberNotFoundException extends RuntimeException{
+  public MemberNotFoundException(String message) {
     super(message);
   }
 }
