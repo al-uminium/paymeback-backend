@@ -6,7 +6,9 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
+import java.util.Currency;
 import java.util.Random;
+import java.util.Set;
 
 @Service
 public class UtilService {
@@ -25,5 +27,11 @@ public class UtilService {
 
   public Instant generateExpiryDate() {
     return ZonedDateTime.now().plusMonths(6).toInstant();
+  }
+
+  public boolean checkIfCurrencyIsValid(String iso) {
+    Set<Currency> currencies = Currency.getAvailableCurrencies();
+    Currency currency = Currency.getInstance(iso);
+    return currencies.contains(currency);
   }
 }

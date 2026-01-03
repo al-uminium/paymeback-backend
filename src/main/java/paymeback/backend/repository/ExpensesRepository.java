@@ -4,6 +4,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import paymeback.backend.domain.Expense;
 
+import java.util.UUID;
+
 @Repository
-public interface ExpensesRepository extends JpaRepository<Expense, String> {
+public interface ExpensesRepository extends JpaRepository<Expense, UUID> {
 }
