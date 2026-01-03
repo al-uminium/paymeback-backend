@@ -1,14 +1,23 @@
 package paymeback.backend.exception;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
   @ExceptionHandler(IllegalArgumentException.class)
-  public ResponseEntity<?> handleBadRequest(IllegalArgumentException ex) {
-    return ResponseEntity.badRequest().body(ex.getMessage());
+  public ResponseEntity<ApiError> handleBadRequest(IllegalArgumentException ex) {
+    return ResponseEntity.badRequest().body(new ApiError(400, ex.getMessage()));
   }
+
+  @ExceptionHandler(GroupNotFoundException.class)
+  public ResponseEntity<ApiError> handleGroupNotFound(GroupNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NO_CONTENT).body(new ApiError(204, ex.getMessage()));
+  }
+
+
 }

@@ -8,7 +8,6 @@ import paymeback.backend.dto.CreateGroupAndMembersDTO;
 import paymeback.backend.dto.MemberDTO;
 import paymeback.backend.dto.response.GroupDetailsResponse;
 import paymeback.backend.exception.GroupNotFoundException;
-import paymeback.backend.exception.MembersNotFoundException;
 import paymeback.backend.repository.ExpenseGroupRepository;
 import paymeback.backend.repository.MemberRepository;
 
@@ -93,11 +92,7 @@ public class GroupManagementService {
       } else {
         members = memberRepository.findAllByGroupId(groupId);
       }
-      if (members.isEmpty()) {
-        throw new MembersNotFoundException("No members found for group id: ".concat(groupId.toString()));
-      } else {
-        return members;
-      }
+      return members;
     } else {
       throw new GroupNotFoundException("Group not found for id: ".concat(groupId.toString()));
     }

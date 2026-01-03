@@ -30,12 +30,12 @@ public class ExpenseGroupController {
     return new ResponseEntity<>(response, HttpStatus.OK);
   }
 
+  // note: {{base-url}}/api/group/:token?asdasd=true will give includeMembers=false, idk how to sanitize it properly :(
   @GetMapping("/{token:[a-zA-Z]{30}}")
   public ResponseEntity<GroupDetailsResponse> getGroupDetails(
       @PathVariable("token") String token,
-      @RequestParam(name = "include", required = false) String include) {
+      @RequestParam(name = "includeMembers", required = false) boolean includeMembers) {
 
-    boolean includeMembers = "members".equalsIgnoreCase(include);
     GroupDetailsResponse response = this.groupService.getGroupDetails(token, includeMembers);
 
     return new ResponseEntity<>(response, HttpStatus.OK);
