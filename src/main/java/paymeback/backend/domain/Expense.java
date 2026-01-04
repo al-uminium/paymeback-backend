@@ -1,6 +1,7 @@
 package paymeback.backend.domain;
 
 import jakarta.persistence.*;
+import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
@@ -9,6 +10,7 @@ import java.time.LocalDate;
 import java.util.Currency;
 import java.util.UUID;
 
+@Data
 @Entity
 @Table(name = "expense")
 public class Expense {
@@ -40,5 +42,5 @@ public class Expense {
   private Instant createdTs; // when the expense was stored in DB
 
   @Column(name = "is_archived")
-  private boolean isArchived;
+  private boolean isArchived = false;
 }

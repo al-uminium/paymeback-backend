@@ -7,5 +7,6 @@ import paymeback.backend.domain.Expense;
 import java.util.UUID;
 
 @Repository
-public interface ExpensesRepository extends JpaRepository<Expense, UUID> {
+public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
+
 }

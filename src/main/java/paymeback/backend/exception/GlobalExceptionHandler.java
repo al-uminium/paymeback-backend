@@ -19,5 +19,13 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.NO_CONTENT).body(new ApiError(204, ex.getMessage()));
   }
 
+  @ExceptionHandler(MemberNotFoundException.class)
+  public ResponseEntity<ApiError> handleMemberNotFound(MemberNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiError(404, ex.getMessage()));
+  }
 
+  @ExceptionHandler(ExpenseNotFoundException.class)
+  public ResponseEntity<ApiError> handleExpenseNotFound(ExpenseNotFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiError(404, ex.getMessage()));
+  }
 }

@@ -6,13 +6,17 @@ import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @Validated
 @Data
-public class CreateExpenseDTO {
+public class ExpenseDTO {
   @NotBlank(message = "Expense name cannot be blank")
   private String expenseName;
+
+  @NotNull
+  private UUID groupId;
 
   @NotNull
   private UUID ownerId;
@@ -27,4 +31,6 @@ public class CreateExpenseDTO {
 
   @PastOrPresent
   private LocalDate date;
+
+  private List<ExpenseParticipantDTO> participants;
 }

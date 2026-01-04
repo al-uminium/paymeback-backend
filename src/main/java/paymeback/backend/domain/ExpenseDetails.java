@@ -10,4 +10,12 @@ import java.util.UUID;
 public class ExpenseDetails {
   private UUID expenseId;
   private UUID memberId;
+
+  public ExpenseDetails() {
+  }
+
+  public ExpenseDetails(UUID expenseId, UUID memberId) {
+    this.expenseId = expenseId;
+    this.memberId = memberId;
+  }
 }

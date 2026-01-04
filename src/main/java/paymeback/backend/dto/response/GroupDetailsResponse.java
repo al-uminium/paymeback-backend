@@ -8,6 +8,6 @@ import java.util.List;
 
 @Data
 public class GroupDetailsResponse {
-  ExpenseGroup groupDetails;
-  List<Member> members;
+  private ExpenseGroup groupDetails;
+  private List<Member> members;
 }
