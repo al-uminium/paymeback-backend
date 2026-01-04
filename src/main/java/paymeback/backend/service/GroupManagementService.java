@@ -2,6 +2,8 @@ package paymeback.backend.service;
 
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import paymeback.backend.domain.AuditLog;
+import paymeback.backend.domain.EventType;
 import paymeback.backend.domain.ExpenseGroup;
 import paymeback.backend.domain.Member;
 import paymeback.backend.dto.CreateGroupAndMembersDTO;
@@ -27,15 +29,22 @@ public class GroupManagementService {
 
   private final UtilService utilService;
 
+  private final AuditLogService auditLogService;
+
   private final Logger logger = Logger.getAnonymousLogger();
 
-  public GroupManagementService(ExpenseGroupRepository expenseGroupRepository, MemberRepository memberRepository, UtilService utilService) {
+  public GroupManagementService(
+      ExpenseGroupRepository expenseGroupRepository,
+      MemberRepository memberRepository,
+      UtilService utilService,
+      AuditLogService auditLogService) {
     this.expenseGroupRepository = expenseGroupRepository;
     this.memberRepository = memberRepository;
     this.utilService = utilService;
+    this.auditLogService = auditLogService;
   }
 
-  public ExpenseGroup createGroup(CreateGroupAndMembersDTO groupDTO){
+  private ExpenseGroup createGroup(CreateGroupAndMembersDTO groupDTO){
     ExpenseGroup expenseGroup = new ExpenseGroup();
     expenseGroup.setName(groupDTO.getGroupName());
     expenseGroup.setLinkToken(utilService.generateLinkToken(30));
@@ -50,7 +59,7 @@ public class GroupManagementService {
     return expenseGroup;
   }
 
-  public List<Member> createMembers(List<MemberDTO> memberDTOs, UUID groupId) {
+  public List<Member> createMembers(List<MemberDTO> memberDTOs, UUID groupId, UUID actorId) {
     List<Member> members = new ArrayList<>();
     try {
       for (MemberDTO dto: memberDTOs) {
@@ -58,6 +67,9 @@ public class GroupManagementService {
         member.setName(dto.getName());
         member.setGroupId(groupId);
         memberRepository.save(member);
+        if (actorId != null) {
+          this.auditLogService.createAndSaveAuditLog(groupId, actorId, EventType.MEMBER_ADDED, member.getName() + " was added to the group.");
+        }
         members.add(member);
       }
     } catch (Exception ex) {
@@ -67,9 +79,27 @@ public class GroupManagementService {
     return members;
   }
 
+  // manually created audit log to solve chicken and egg case between audit log, group and member creation
   public GroupDetailsResponse createGroupAndMembers(CreateGroupAndMembersDTO createGroupAndMembersDTO) {
+    AuditLog log = new AuditLog();
+    log.setCreatedTs(Instant.now());
+
     ExpenseGroup group = this.createGroup(createGroupAndMembersDTO);
-    List<Member> members = this.createMembers(createGroupAndMembersDTO.getMembers(), group.getId());
+    List<Member> members = this.createMembers(createGroupAndMembersDTO.getMembers(), group.getId(), null);
+    Member creator = this.getCreator(createGroupAndMembersDTO.getCreator(), members);
+    if (creator == null) {
+      throw new IllegalArgumentException("A user must be selected to create a group.");
+    } else {
+      log.setGroupId(group.getId());
+      log.setActorId(creator.getId());
+      log.setEventType(EventType.GROUP_CREATED);
+      log.setMessage(group.getName().concat(" was created."));
+      this.auditLogService.saveAuditLog(log);
+      for(Member member: members) {
+        this.auditLogService.createAndSaveAuditLog(group.getId(), creator.getId(), EventType.MEMBER_ADDED, member.getName() + " was added to the group.");
+      }
+    }
+
     GroupDetailsResponse response = new GroupDetailsResponse();
     response.setGroupDetails(group);
     response.setMembers(members);
@@ -111,7 +141,8 @@ public class GroupManagementService {
     return response;
   }
 
-  public Member softDelete(UUID memberId) {
+  //TODO UPDATE THE METHOD TO CHECK IF THERE ARE ANY DEBT -- IF THERE IS, RETURN EXCEPTION.
+  public Member softDelete(UUID memberId, UUID groupId, UUID actorId) {
     Optional<Member> optMember = this.memberRepository.findById(memberId);
     if (optMember.isEmpty()) {
       throw new MemberNotFoundException("Cannot find member with id: ".concat(memberId.toString()));
@@ -120,20 +151,32 @@ public class GroupManagementService {
       member.setRemovedTs(Instant.now());
       member.setStatus("INACTIVE");
       this.memberRepository.save(member);
+      this.auditLogService.createAndSaveAuditLog(groupId, actorId, EventType.MEMBER_REMOVED, member.getName() + " was removed from the group.");
       return member;
     }
   }
 
   // decided not to merge soft delete and update so it's clearer what is being done.
-  public Member updateMember(UUID memberId, MemberDTO memberDTO) {
+  public Member updateMember(UUID memberId, MemberDTO memberDTO, UUID groupId, UUID actorId) {
     Optional<Member> optMember = this.memberRepository.findById(memberId);
     if (optMember.isEmpty()) {
       throw new MemberNotFoundException("Cannot find member with id: ".concat(memberId.toString()));
     } else {
       Member member = optMember.get();
+      String previousName = member.getName();
       member.setName(memberDTO.getName());
       this.memberRepository.save(member);
+      this.auditLogService.createAndSaveAuditLog(groupId, actorId, EventType.MEMBER_EDITED, previousName + " changed their name to " + member.getName());
       return member;
     }
+  }
+
+  private Member getCreator(MemberDTO creatorDTO, List<Member> createdMembers) {
+    for (Member member: createdMembers) {
+      if (creatorDTO.getName().contentEquals(member.getName())) {
+        return member;
+      }
+    }
+    return null;
   }
 }

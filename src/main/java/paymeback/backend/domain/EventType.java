@@ -8,5 +8,6 @@ public enum EventType {
   GROUP_EDITED,
   MEMBER_ADDED,
   MEMBER_REMOVED,
+  MEMBER_EDITED,
   MEMBER_PAID
 }

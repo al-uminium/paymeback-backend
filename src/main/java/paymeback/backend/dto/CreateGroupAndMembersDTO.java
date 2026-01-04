@@ -18,5 +18,7 @@ public class CreateGroupAndMembersDTO {
   @Pattern(regexp = "[A-Z]{3}")
   private String defaultCurrency;
   @Valid
+  private MemberDTO creator;
+  @Valid
   private List<MemberDTO> members;
 }

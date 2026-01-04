@@ -66,7 +66,7 @@ CREATE TABLE audit_log(
     event_type VARCHAR(50) NOT NULL,
     log_message VARCHAR(255) NOT NULL,
     log_ts TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (group_id) REFERENCES expense_group(group_id),
+    FOREIGN KEY (group_id) REFERENCES expense_group(group_id) ON DELETE CASCADE,
     FOREIGN KEY (actor_member_id) REFERENCES member(member_id)
 );
 

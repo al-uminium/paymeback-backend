@@ -53,8 +53,9 @@ public class ExpenseGroupController {
   @PutMapping("/{groupId}/members")
   public ResponseEntity<List<Member>> addMembers(
       @PathVariable("groupId") UUID groupId,
+      @RequestHeader("X-Actor-Id") UUID actorId,
       @RequestBody MemberDTOs memberDTOs) {
-    List<Member> members = this.groupService.createMembers(memberDTOs.getMembers(), groupId);
+    List<Member> members = this.groupService.createMembers(memberDTOs.getMembers(), groupId, actorId);
 
     return new ResponseEntity<>(members, HttpStatus.OK);
   }
@@ -62,17 +63,19 @@ public class ExpenseGroupController {
   @PutMapping("/member/{memberId}")
   public ResponseEntity<Member> updateMember(
       @PathVariable("memberId") UUID memberId,
-      @RequestParam(name = "softDelete", defaultValue = "false") boolean isSoftDelete,
+      @RequestHeader("X-Group-Id") UUID groupId,
+      @RequestHeader("X-Actor-Id") UUID actorId,
+      @RequestParam(name = "delete", defaultValue = "false") boolean isSoftDelete,
       @RequestBody(required = false) MemberDTO memberDTO
   ) {
     Member member;
     if (isSoftDelete) {
-      member = this.groupService.softDelete(memberId);
+      member = this.groupService.softDelete(memberId, groupId, actorId);
     } else {
       if (memberDTO == null) {
         throw new IllegalArgumentException("Member name is required for update");
       }
-      member = this.groupService.updateMember(memberId, memberDTO);
+      member = this.groupService.updateMember(memberId, memberDTO, groupId, actorId);
     }
     return new ResponseEntity<>(member, HttpStatus.OK);
   }

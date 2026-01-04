@@ -1,11 +1,13 @@
 package paymeback.backend.domain;
 
 import jakarta.persistence.*;
+import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
 import java.util.UUID;
 
+@Data
 @Entity
 @Table(name = "audit_log")
 public class AuditLog {
