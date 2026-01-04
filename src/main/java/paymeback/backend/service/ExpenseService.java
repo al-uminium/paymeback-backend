@@ -7,6 +7,7 @@ import paymeback.backend.dto.ExpenseDTO;
 import paymeback.backend.dto.ExpenseParticipantDTO;
 import paymeback.backend.dto.mapper.ExpenseMapper;
 import paymeback.backend.dto.response.ExpenseResponse;
+import paymeback.backend.dto.MemberDebtDTO;
 import paymeback.backend.exception.ExpenseNotFoundException;
 import paymeback.backend.exception.MemberNotFoundException;
 import paymeback.backend.repository.ExpenseParticipantRepository;
@@ -26,6 +27,8 @@ public class ExpenseService {
 
   private final ExpenseParticipantRepository expenseParticipantRepository;
 
+  private final GroupManagementService groupService;
+
   private final AuditLogService auditLogService;
 
   private final ExpenseMapper mapper;
@@ -34,12 +37,14 @@ public class ExpenseService {
       ExpenseRepository expenseRepository,
       MemberRepository memberRepository,
       ExpenseParticipantRepository expenseParticipantRepository,
+      GroupManagementService groupService,
       AuditLogService auditLogService,
       ExpenseMapper mapper
   ) {
     this.expenseRepository = expenseRepository;
     this.memberRepository = memberRepository;
     this.expenseParticipantRepository = expenseParticipantRepository;
+    this.groupService = groupService;
     this.auditLogService = auditLogService;
     this.mapper = mapper;
   }
@@ -102,6 +107,20 @@ public class ExpenseService {
       this.auditLogService.createAndSaveAuditLog(groupId, actorId, EventType.EXPENSE_DELETED, "Expense was deleted.");
     } else {
       throw new ExpenseNotFoundException("The expense of id " + expenseId.toString() + " you are trying to delete does not exist.");
+    }
+  }
+
+  public List<MemberDebtDTO> getMembersNetDebt(UUID groupId) {
+    List<Member> members = this.groupService.getMembers(groupId, true);
+    List<MemberDebtDTO> memberDebtDTOs = new ArrayList<>();
+    if (!members.isEmpty()) {
+      for (Member member: members) {
+        MemberDebtDTO memberDebtDTO = this.expenseParticipantRepository.calculateMemberNetDebt(member.getId());
+        memberDebtDTOs.add(memberDebtDTO);
+      }
+      return memberDebtDTOs;
+    } else {
+      return new ArrayList<>();
     }
   }
 }

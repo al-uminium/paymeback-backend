@@ -116,9 +116,8 @@ public class GroupManagementService {
   }
 
   public List<Member> getMembers(UUID groupId, boolean activeMembersOnly) {
-    boolean groupExists = expenseGroupRepository.existsById(groupId);
     List<Member> members;
-    if (groupExists) {
+    if (expenseGroupRepository.existsById(groupId)) {
       if (activeMembersOnly) {
         members = memberRepository.findAllByGroupIdAndRemovedTsIsNull(groupId);
       } else {

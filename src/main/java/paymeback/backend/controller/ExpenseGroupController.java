@@ -8,7 +8,9 @@ import paymeback.backend.domain.Member;
 import paymeback.backend.dto.CreateGroupAndMembersDTO;
 import paymeback.backend.dto.MemberDTO;
 import paymeback.backend.dto.MemberDTOs;
+import paymeback.backend.dto.MemberDebtDTO;
 import paymeback.backend.dto.response.GroupDetailsResponse;
+import paymeback.backend.service.ExpenseService;
 import paymeback.backend.service.GroupManagementService;
 
 import java.util.List;
@@ -19,9 +21,11 @@ import java.util.UUID;
 public class ExpenseGroupController {
 
   private final GroupManagementService groupService;
+  private final ExpenseService expenseService;
 
-  public ExpenseGroupController(GroupManagementService groupService) {
+  public ExpenseGroupController(GroupManagementService groupService, ExpenseService expenseService) {
     this.groupService = groupService;
+    this.expenseService = expenseService;
   }
 
   @PostMapping("/create")
@@ -78,5 +82,14 @@ public class ExpenseGroupController {
       member = this.groupService.updateMember(memberId, memberDTO, groupId, actorId);
     }
     return new ResponseEntity<>(member, HttpStatus.OK);
+  }
+
+  @GetMapping("/{groupId}/expenses/summary")
+  public ResponseEntity<List<MemberDebtDTO>> getExpenseSummary(
+      @PathVariable(name = "groupId") UUID groupId
+  ) {
+    List<MemberDebtDTO> memberDebtDTOs = this.expenseService.getMembersNetDebt(groupId);
+
+    return new ResponseEntity<>(memberDebtDTOs, HttpStatus.OK);
   }
 }
