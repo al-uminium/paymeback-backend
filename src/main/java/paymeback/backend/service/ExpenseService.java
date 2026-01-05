@@ -3,11 +3,14 @@ package paymeback.backend.service;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import paymeback.backend.domain.*;
-import paymeback.backend.dto.ExpenseDTO;
-import paymeback.backend.dto.ExpenseParticipantDTO;
+import paymeback.backend.dto.request.ExpenseDTO;
+import paymeback.backend.dto.request.ExpenseParticipantDTO;
 import paymeback.backend.dto.mapper.ExpenseMapper;
-import paymeback.backend.dto.response.ExpenseResponse;
-import paymeback.backend.dto.MemberDebtDTO;
+import paymeback.backend.dto.response.ExpenseCreatedSummaryDTO;
+import paymeback.backend.dto.response.ExpenseSummaryDTO;
+import paymeback.backend.dto.response.MemberDebtDTO;
+import paymeback.backend.dto.response.projections.ExpenseProjection;
+import paymeback.backend.dto.response.projections.ParticipantsProjection;
 import paymeback.backend.exception.ExpenseNotFoundException;
 import paymeback.backend.exception.MemberNotFoundException;
 import paymeback.backend.repository.ExpenseParticipantRepository;
@@ -74,18 +77,19 @@ public class ExpenseService {
   }
 
 
-  public ExpenseResponse createAndSaveExpense(ExpenseDTO expenseDTO, UUID actorId) {
+
+  public ExpenseCreatedSummaryDTO createAndSaveExpense(ExpenseDTO expenseDTO, UUID actorId) {
     // save expense first, need id which is generated after saving.
     Expense expense = mapper.expenseDtoToExpense(expenseDTO);
     expense = this.expenseRepository.save(expense);
     List<ExpenseParticipant> participants = saveToExpenseParticipants(expenseDTO.getParticipants(), expense.getId(), expenseDTO.getOwnerId());
-    ExpenseResponse expenseResponse = new ExpenseResponse(expense, participants);
+    ExpenseCreatedSummaryDTO expenseCreatedSummaryDTO = new ExpenseCreatedSummaryDTO(expense, participants);
     this.auditLogService.createAndSaveAuditLog(expense.getGroupId(), actorId, EventType.EXPENSE_CREATED, "Expense was created.");
 
-    return expenseResponse;
+    return expenseCreatedSummaryDTO;
   }
 
-  public ExpenseResponse updateExpense(ExpenseDTO expenseDTO, UUID expenseId, UUID actorId) {
+  public ExpenseCreatedSummaryDTO updateExpense(ExpenseDTO expenseDTO, UUID expenseId, UUID actorId) {
     if (this.expenseRepository.existsById(expenseId)) {
       Expense expense = mapper.expenseDtoToExpense(expenseDTO);
       expense.setId(expenseId);
@@ -93,9 +97,9 @@ public class ExpenseService {
       this.expenseParticipantRepository.deleteAllByExpenseId(expenseId);
 
       List<ExpenseParticipant> participants = this.saveToExpenseParticipants(expenseDTO.getParticipants(), expenseId, expenseDTO.getOwnerId());
-      ExpenseResponse expenseResponse = new ExpenseResponse(expense, participants);
+      ExpenseCreatedSummaryDTO expenseCreatedSummaryDTO = new ExpenseCreatedSummaryDTO(expense, participants);
       this.auditLogService.createAndSaveAuditLog(expense.getGroupId(), actorId, EventType.EXPENSE_EDITED, "Expense was edited.");
-      return expenseResponse;
+      return expenseCreatedSummaryDTO;
     } else {
       throw new ExpenseNotFoundException("The expense of id " + expenseId.toString() + " you are trying to update does not exist.");
     }
@@ -110,12 +114,26 @@ public class ExpenseService {
     }
   }
 
-  public List<MemberDebtDTO> getMembersNetDebt(UUID groupId) {
+  public List<ExpenseSummaryDTO> getExpensesForGroup(UUID groupId) {
+    List<ExpenseSummaryDTO> expenseSummaries = new ArrayList<>();
+    List<ExpenseProjection> expenseProjections = this.expenseRepository.findAllExpensesByGroup(groupId);
+    for (ExpenseProjection expense: expenseProjections) {
+      List<ParticipantsProjection> participants = this.expenseParticipantRepository.findParticipantsForExpense(expense.getExpenseId());
+      ExpenseSummaryDTO expenseSummaryDTO = new ExpenseSummaryDTO();
+      expenseSummaryDTO.setExpense(expense);
+      expenseSummaryDTO.setParticipants(participants);
+      expenseSummaries.add(expenseSummaryDTO);
+    }
+    return expenseSummaries;
+  }
+
+  // show selected currency, add *all* when i setup redis for the conversion api
+  public List<MemberDebtDTO> getMembersNetDebtByCurrency(UUID groupId, Currency currency) {
     List<Member> members = this.groupService.getMembers(groupId, true);
     List<MemberDebtDTO> memberDebtDTOs = new ArrayList<>();
     if (!members.isEmpty()) {
       for (Member member: members) {
-        MemberDebtDTO memberDebtDTO = this.expenseParticipantRepository.calculateMemberNetDebt(member.getId());
+        MemberDebtDTO memberDebtDTO = this.expenseParticipantRepository.calculateMemberNetDebtByCurrency(member.getId(), currency);
         memberDebtDTOs.add(memberDebtDTO);
       }
       return memberDebtDTOs;

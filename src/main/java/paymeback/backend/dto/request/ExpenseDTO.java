@@ -1,4 +1,4 @@
-package paymeback.backend.dto;
+package paymeback.backend.dto.request;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;

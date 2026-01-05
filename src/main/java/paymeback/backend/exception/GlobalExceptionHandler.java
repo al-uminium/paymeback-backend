@@ -28,4 +28,9 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiError> handleExpenseNotFound(ExpenseNotFoundException ex) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiError(404, ex.getMessage()));
   }
+
+  @ExceptionHandler(CannotDeleteWithActiveDebtException.class)
+  public ResponseEntity<ApiError> handleCannotDeleteWithActiveDebt(CannotDeleteWithActiveDebtException ex) {
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiError(403, ex.getMessage()));
+  }
 }

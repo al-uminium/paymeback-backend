@@ -4,9 +4,8 @@ import org.springframework.stereotype.Service;
 import paymeback.backend.domain.Expense;
 import paymeback.backend.domain.ExpenseDetails;
 import paymeback.backend.domain.ExpenseParticipant;
-import paymeback.backend.dto.ExpenseDTO;
-import paymeback.backend.dto.ExpenseParticipantDTO;
-import paymeback.backend.dto.response.ExpenseResponse;
+import paymeback.backend.dto.request.ExpenseDTO;
+import paymeback.backend.dto.request.ExpenseParticipantDTO;
 
 import java.util.Currency;
 import java.util.List;

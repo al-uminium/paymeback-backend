@@ -7,7 +7,7 @@ import paymeback.backend.domain.Member;
 import java.util.List;
 
 @Data
-public class GroupDetailsResponse {
+public class GroupDetailsDTO {
   private ExpenseGroup groupDetails;
   private List<Member> members;
 }

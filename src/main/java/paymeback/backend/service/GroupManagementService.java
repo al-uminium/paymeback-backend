@@ -6,14 +6,17 @@ import paymeback.backend.domain.AuditLog;
 import paymeback.backend.domain.EventType;
 import paymeback.backend.domain.ExpenseGroup;
 import paymeback.backend.domain.Member;
-import paymeback.backend.dto.CreateGroupAndMembersDTO;
-import paymeback.backend.dto.MemberDTO;
-import paymeback.backend.dto.response.GroupDetailsResponse;
+import paymeback.backend.dto.request.CreateGroupAndMembersDTO;
+import paymeback.backend.dto.request.MemberDTO;
+import paymeback.backend.dto.response.GroupDetailsDTO;
+import paymeback.backend.exception.CannotDeleteWithActiveDebtException;
 import paymeback.backend.exception.GroupNotFoundException;
 import paymeback.backend.exception.MemberNotFoundException;
 import paymeback.backend.repository.ExpenseGroupRepository;
+import paymeback.backend.repository.ExpenseParticipantRepository;
 import paymeback.backend.repository.MemberRepository;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.*;
 import java.util.logging.Level;
@@ -27,6 +30,8 @@ public class GroupManagementService {
 
   private final MemberRepository memberRepository;
 
+  private final ExpenseParticipantRepository expenseParticipantRepository;
+
   private final UtilService utilService;
 
   private final AuditLogService auditLogService;
@@ -36,10 +41,12 @@ public class GroupManagementService {
   public GroupManagementService(
       ExpenseGroupRepository expenseGroupRepository,
       MemberRepository memberRepository,
+      ExpenseParticipantRepository expenseParticipantRepository,
       UtilService utilService,
       AuditLogService auditLogService) {
     this.expenseGroupRepository = expenseGroupRepository;
     this.memberRepository = memberRepository;
+    this.expenseParticipantRepository = expenseParticipantRepository;
     this.utilService = utilService;
     this.auditLogService = auditLogService;
   }
@@ -80,7 +87,7 @@ public class GroupManagementService {
   }
 
   // manually created audit log to solve chicken and egg case between audit log, group and member creation
-  public GroupDetailsResponse createGroupAndMembers(CreateGroupAndMembersDTO createGroupAndMembersDTO) {
+  public GroupDetailsDTO createGroupAndMembers(CreateGroupAndMembersDTO createGroupAndMembersDTO) {
     AuditLog log = new AuditLog();
     log.setCreatedTs(Instant.now());
 
@@ -100,7 +107,7 @@ public class GroupManagementService {
       }
     }
 
-    GroupDetailsResponse response = new GroupDetailsResponse();
+    GroupDetailsDTO response = new GroupDetailsDTO();
     response.setGroupDetails(group);
     response.setMembers(members);
     return response;
@@ -129,8 +136,8 @@ public class GroupManagementService {
     }
   }
 
-  public GroupDetailsResponse getGroupDetails(String token, boolean includeMembers) {
-    GroupDetailsResponse response = new GroupDetailsResponse();
+  public GroupDetailsDTO getGroupDetails(String token, boolean includeMembers) {
+    GroupDetailsDTO response = new GroupDetailsDTO();
     ExpenseGroup group = this.getExpenseGroupWithToken(token);
     response.setGroupDetails(group);
     if (includeMembers) {
@@ -140,18 +147,23 @@ public class GroupManagementService {
     return response;
   }
 
-  //TODO UPDATE THE METHOD TO CHECK IF THERE ARE ANY DEBT -- IF THERE IS, RETURN EXCEPTION.
   public Member softDelete(UUID memberId, UUID groupId, UUID actorId) {
     Optional<Member> optMember = this.memberRepository.findById(memberId);
     if (optMember.isEmpty()) {
       throw new MemberNotFoundException("Cannot find member with id: ".concat(memberId.toString()));
     } else {
       Member member = optMember.get();
-      member.setRemovedTs(Instant.now());
-      member.setStatus("INACTIVE");
-      this.memberRepository.save(member);
-      this.auditLogService.createAndSaveAuditLog(groupId, actorId, EventType.MEMBER_REMOVED, member.getName() + " was removed from the group.");
-      return member;
+      // check is member has debt
+      BigDecimal debt = this.expenseParticipantRepository.calculateMemberNetDebt(memberId).getNetDebt();
+      if (debt.compareTo(BigDecimal.ZERO) == 0) {
+        member.setRemovedTs(Instant.now());
+        member.setStatus("INACTIVE");
+        this.memberRepository.save(member);
+        this.auditLogService.createAndSaveAuditLog(groupId, actorId, EventType.MEMBER_REMOVED, member.getName() + " was removed from the group.");
+        return member;
+      } else {
+        throw new CannotDeleteWithActiveDebtException("Member still has active debt, unable to delete");
+      }
     }
   }
 

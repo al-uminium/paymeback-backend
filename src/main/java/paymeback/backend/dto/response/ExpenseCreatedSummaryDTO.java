@@ -7,14 +7,14 @@ import paymeback.backend.domain.ExpenseParticipant;
 import java.util.List;
 
 @Data
-public class ExpenseResponse {
+public class ExpenseCreatedSummaryDTO {
   private Expense expense;
   private List<ExpenseParticipant> participants;
 
-  public ExpenseResponse() {
+  public ExpenseCreatedSummaryDTO() {
   }
 
-  public ExpenseResponse(Expense expense, List<ExpenseParticipant> participants) {
+  public ExpenseCreatedSummaryDTO(Expense expense, List<ExpenseParticipant> participants) {
     this.expense = expense;
     this.participants = participants;
   }
