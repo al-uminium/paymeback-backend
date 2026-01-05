@@ -11,6 +11,7 @@ import paymeback.backend.dto.request.MemberDTOs;
 import paymeback.backend.dto.response.ExpenseSummaryDTO;
 import paymeback.backend.dto.response.MemberDebtDTO;
 import paymeback.backend.dto.response.GroupDetailsDTO;
+import paymeback.backend.dto.response.RecommendedSplitDTO;
 import paymeback.backend.dto.response.projections.AuditLogProjection;
 import paymeback.backend.service.AuditLogService;
 import paymeback.backend.service.ExpenseService;
@@ -111,6 +112,17 @@ public class ExpenseGroupController {
     List<AuditLogProjection> logs = this.auditLogService.getGroupAuditLogs(groupId);
 
     return new ResponseEntity<>(logs, HttpStatus.OK);
+  }
+
+  @GetMapping("/{groupId}/expenses/{currency}/debts/split")
+  public ResponseEntity<List<RecommendedSplitDTO>> getRecommendedSplit(
+      @PathVariable(name = "groupId") UUID groupId,
+      @PathVariable(name = "currency") Currency currency
+  ) {
+    List<MemberDebtDTO> memberDebtDTOs = this.expenseService.getMembersNetDebtByCurrency(groupId, currency);
+    List<RecommendedSplitDTO> recommendedSplitDTOs = this.expenseService.calculateRecommendedSplit(memberDebtDTOs);
+
+    return new ResponseEntity<>(recommendedSplitDTOs, HttpStatus.OK);
   }
 }
 

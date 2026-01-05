@@ -55,8 +55,7 @@ public interface ExpenseParticipantRepository extends JpaRepository<ExpenseParti
       SELECT
       	m.member_id AS member_id,
       	m.member_name AS member_name,
-      	SUM(amount_owed) AS net_debt,
-      	e.expense_currency AS currency
+      	SUM(amount_owed) AS net_debt
       FROM expense_participant ep
       JOIN member m
       	ON ep.member_id = m.member_id

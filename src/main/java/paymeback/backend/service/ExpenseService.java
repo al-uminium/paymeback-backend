@@ -9,6 +9,7 @@ import paymeback.backend.dto.mapper.ExpenseMapper;
 import paymeback.backend.dto.response.ExpenseCreatedSummaryDTO;
 import paymeback.backend.dto.response.ExpenseSummaryDTO;
 import paymeback.backend.dto.response.MemberDebtDTO;
+import paymeback.backend.dto.response.RecommendedSplitDTO;
 import paymeback.backend.dto.response.projections.ExpenseProjection;
 import paymeback.backend.dto.response.projections.ParticipantsProjection;
 import paymeback.backend.exception.ExpenseNotFoundException;
@@ -140,5 +141,54 @@ public class ExpenseService {
     } else {
       return new ArrayList<>();
     }
+  }
+
+  //! This list expects an unsorted list of debts.
+  //! The debts, when added all together, NEED to resolve to 0 (which should be the case if data is not compromised).
+  //! Sorted list should look like: [5000, 2500, -3000, -4500]
+  public List<RecommendedSplitDTO> calculateRecommendedSplit(List<MemberDebtDTO> memberDebtDTOs) {
+
+    List<RecommendedSplitDTO> recommendedSplitDTOs = new ArrayList<>();
+
+    int l_index = 0;
+    int r_index = memberDebtDTOs.size() - 1;
+
+    if (l_index == r_index || memberDebtDTOs.isEmpty()) {
+      throw new IllegalArgumentException("Nothing to split.");
+    }
+    BigDecimal balance = memberDebtDTOs.stream()
+        .reduce(BigDecimal.ZERO, (sum, debt) -> sum.add(debt.getNetDebt()), BigDecimal::add);
+    if (balance.compareTo(BigDecimal.ZERO) != 0) {
+      throw new IllegalArgumentException("Sum of net debt does not balance to 0, balance calculated: " + balance.toString());
+    }
+    memberDebtDTOs.sort((current, next) -> next.getNetDebt().compareTo(current.getNetDebt()));
+
+    while (l_index < r_index) {
+      MemberDebtDTO right = memberDebtDTOs.get(r_index);
+      MemberDebtDTO left = memberDebtDTOs.get(l_index);
+      if (right.getNetDebt().compareTo(BigDecimal.ZERO) == 0) {
+        r_index--;
+        continue;
+      }
+      if (left.getNetDebt().compareTo(BigDecimal.ZERO) == 0) {
+        l_index++;
+        continue;
+      }
+
+      RecommendedSplitDTO dto = new RecommendedSplitDTO(left.getMemberId(), left.getMemberName(), right.getMemberId(), right.getMemberName());
+      // checking if sum of debts is positive -> if positive means left owes more than what right is owed.
+      BigDecimal debtSum = left.getNetDebt().add(right.getNetDebt());
+      if (debtSum.compareTo(BigDecimal.ZERO) >= 0) {
+        dto.setShouldPayAmount(right.getNetDebt());
+        left.setNetDebt(debtSum);
+        right.setNetDebt(BigDecimal.ZERO);
+      } else {
+        dto.setShouldPayAmount(left.getNetDebt());
+        right.setNetDebt(debtSum);
+        left.setNetDebt(BigDecimal.ZERO);
+      }
+      recommendedSplitDTOs.add(dto);
+    }
+    return recommendedSplitDTOs;
   }
 }
