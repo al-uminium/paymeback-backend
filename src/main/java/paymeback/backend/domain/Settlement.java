@@ -1,6 +1,7 @@
 package paymeback.backend.domain;
 
 import jakarta.persistence.*;
+import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
@@ -8,6 +9,7 @@ import java.time.Instant;
 import java.util.Currency;
 import java.util.UUID;
 
+@Data
 @Entity
 @Table(name = "settlement")
 public class Settlement {
@@ -36,4 +38,9 @@ public class Settlement {
   @Column(name = "settlement_ts")
   private Instant createdTs;
 
+  @Column(name = "is_archived")
+  private Boolean isArchived = false;
+
+  @Column(name = "archived_ts")
+  private Instant archivedTs;
 }

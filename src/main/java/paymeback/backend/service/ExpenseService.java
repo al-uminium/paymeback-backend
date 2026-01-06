@@ -1,15 +1,14 @@
 package paymeback.backend.service;
 
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import paymeback.backend.domain.*;
 import paymeback.backend.dto.request.ExpenseDTO;
 import paymeback.backend.dto.request.ExpenseParticipantDTO;
 import paymeback.backend.dto.mapper.ExpenseMapper;
-import paymeback.backend.dto.response.ExpenseCreatedSummaryDTO;
-import paymeback.backend.dto.response.ExpenseSummaryDTO;
-import paymeback.backend.dto.response.MemberDebtDTO;
-import paymeback.backend.dto.response.RecommendedSplitDTO;
+import paymeback.backend.dto.response.*;
 import paymeback.backend.dto.response.projections.ExpenseProjection;
 import paymeback.backend.dto.response.projections.ParticipantsProjection;
 import paymeback.backend.exception.ExpenseNotFoundException;
@@ -35,7 +34,11 @@ public class ExpenseService {
 
   private final AuditLogService auditLogService;
 
+  private final SettlementService settlementService;
+
   private final ExpenseMapper mapper;
+
+  private static final Logger logger = LoggerFactory.getLogger(ExpenseService.class);
 
   public ExpenseService(
       ExpenseRepository expenseRepository,
@@ -43,6 +46,7 @@ public class ExpenseService {
       ExpenseParticipantRepository expenseParticipantRepository,
       GroupManagementService groupService,
       AuditLogService auditLogService,
+      SettlementService settlementService,
       ExpenseMapper mapper
   ) {
     this.expenseRepository = expenseRepository;
@@ -50,6 +54,7 @@ public class ExpenseService {
     this.expenseParticipantRepository = expenseParticipantRepository;
     this.groupService = groupService;
     this.auditLogService = auditLogService;
+    this.settlementService = settlementService;
     this.mapper = mapper;
   }
 
@@ -134,8 +139,26 @@ public class ExpenseService {
     List<MemberDebtDTO> memberDebtDTOs = new ArrayList<>();
     if (!members.isEmpty()) {
       for (Member member: members) {
+        // if net debt > 0, member has net debt.
         MemberDebtDTO memberDebtDTO = this.expenseParticipantRepository.calculateMemberNetDebtByCurrency(member.getId(), currency);
-        memberDebtDTOs.add(memberDebtDTO);
+        if (memberDebtDTO.getNetDebt().compareTo(BigDecimal.ZERO) > 0) {
+          // check if member has paid any settlements
+          MemberPaidDTO memberPaidDTO = this.settlementService.getNetSettlementsByPayerIdAndCurrency(member.getId(), currency);
+          if (memberPaidDTO != null) {
+            BigDecimal updatedDebt = memberDebtDTO.getNetDebt().subtract(memberPaidDTO.getNetPaid());
+            memberDebtDTO.setNetDebt(updatedDebt);
+          }
+        } else {
+          // check if member has been paid any settlements
+          MemberPaidDTO memberPaidDTO = this.settlementService.getNetSettlementsByPayeeIdAndCurrency(member.getId(), currency);
+          if (memberPaidDTO != null) {
+            BigDecimal updatedDebt = memberDebtDTO.getNetDebt().add(memberPaidDTO.getNetPaid());
+            memberDebtDTO.setNetDebt(updatedDebt);
+          }
+        }
+        if (memberDebtDTO.getNetDebt().compareTo(BigDecimal.ZERO) != 0) {
+          memberDebtDTOs.add(memberDebtDTO);
+        }
       }
       return memberDebtDTOs;
     } else {
@@ -179,11 +202,11 @@ public class ExpenseService {
       // checking if sum of debts is positive -> if positive means left owes more than what right is owed.
       BigDecimal debtSum = left.getNetDebt().add(right.getNetDebt());
       if (debtSum.compareTo(BigDecimal.ZERO) >= 0) {
-        dto.setShouldPayAmount(right.getNetDebt());
+        dto.setShouldPayAmount(right.getNetDebt().abs());
         left.setNetDebt(debtSum);
         right.setNetDebt(BigDecimal.ZERO);
       } else {
-        dto.setShouldPayAmount(left.getNetDebt());
+        dto.setShouldPayAmount(left.getNetDebt().abs());
         right.setNetDebt(debtSum);
         left.setNetDebt(BigDecimal.ZERO);
       }

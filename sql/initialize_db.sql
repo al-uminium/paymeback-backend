@@ -33,6 +33,7 @@ CREATE TABLE expense(
     expense_date DATE NOT NULL,
     expense_created_ts TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_archived BOOLEAN NOT NULL DEFAULT FALSE,
+    archived_ts TIMESTAMPTZ
     FOREIGN KEY (group_id) REFERENCES expense_group(group_id) ON DELETE CASCADE,
     FOREIGN KEY (expense_owner_id) REFERENCES member(member_id)
 );
@@ -54,6 +55,8 @@ CREATE TABLE settlement(
     amount_paid NUMERIC(10,2) NOT NULL CHECK (amount_paid > 0),
     currency VARCHAR(3) NOT NULL,
     settlement_ts TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_archived BOOLEAN NOT NULL DEFAULT FALSE,
+    archived_ts TIMESTAMPTZ,
     FOREIGN KEY (group_id) REFERENCES expense_group(group_id) ON DELETE CASCADE,
     FOREIGN KEY (payee_member_id) REFERENCES member(member_id),
     FOREIGN KEY (payer_member_id) REFERENCES member(member_id)

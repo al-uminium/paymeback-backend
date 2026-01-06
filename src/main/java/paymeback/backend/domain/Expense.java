@@ -43,4 +43,7 @@ public class Expense {
 
   @Column(name = "is_archived")
   private boolean isArchived = false;
+
+  @Column(name = "archived_ts")
+  private Instant archivedTs;
 }

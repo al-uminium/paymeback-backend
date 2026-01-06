@@ -33,4 +33,9 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiError> handleCannotDeleteWithActiveDebt(CannotDeleteWithActiveDebtException ex) {
     return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiError(403, ex.getMessage()));
   }
+
+  @ExceptionHandler(InvalidSettlementException.class)
+  public ResponseEntity<ApiError> handleInvalidSettlement(InvalidSettlementException ex) {
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ApiError(403, ex.getMessage()));
+  }
 }
