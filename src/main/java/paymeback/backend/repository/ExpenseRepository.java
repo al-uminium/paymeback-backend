@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Repository
 public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
-  List<Expense> findAllByGroupIdAndIsArchivedFalseOrderByCreatedTsDesc(UUID groupId);
+  List<Expense> findAllByGroupIdAndIsArchivedFalse(UUID groupId);
   @NativeQuery("""
       SELECT
       	e.expense_id AS expense_id,
@@ -29,4 +29,5 @@ public interface ExpenseRepository extends JpaRepository<Expense, UUID> {
       AND e.is_archived='false';
       """)
   List<ExpenseProjection> findAllExpensesByGroup(UUID groupId);
+
 }

@@ -24,14 +24,4 @@ public class UtilService {
 
     return linkToken;
   }
-
-  public Instant generateExpiryDate() {
-    return ZonedDateTime.now().plusMonths(6).toInstant();
-  }
-
-  public boolean checkIfCurrencyIsValid(String iso) {
-    Set<Currency> currencies = Currency.getAvailableCurrencies();
-    Currency currency = Currency.getInstance(iso);
-    return currencies.contains(currency);
-  }
 }

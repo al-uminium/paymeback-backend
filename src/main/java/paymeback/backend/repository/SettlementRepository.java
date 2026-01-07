@@ -5,8 +5,10 @@ import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.stereotype.Repository;
 import paymeback.backend.domain.Settlement;
 import paymeback.backend.dto.response.MemberPaidDTO;
+import paymeback.backend.dto.response.projections.SettlementsProjection;
 
 import java.util.Currency;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -41,4 +43,42 @@ public interface SettlementRepository extends JpaRepository<Settlement, UUID> {
       GROUP BY s.payee_member_id, s.currency, m.member_name;
       """)
   Optional<MemberPaidDTO> getNetSettlementsByPayeeIdAndCurrency(UUID memberId, Currency currency);
+
+  @NativeQuery("""
+      SELECT
+      	s.settlement_id AS settlement_id,
+      	s.payer_member_id AS payer_id,
+      	payer.member_name AS payer_name,
+      	s.payee_member_id AS payee_id,
+      	payee.member_name AS payee_name,
+      	s.amount_paid AS amount_paid,
+      	s.currency AS currency,
+      	s.settlement_ts AS createdTs
+      FROM settlement s
+      JOIN member payer
+      	ON s.payer_member_id = payer.member_id
+      JOIN member payee
+      	ON s.payee_member_id = payee.member_id
+      WHERE s.group_id = ?1
+      """)
+  List<SettlementsProjection> getAllSettlements(UUID groupId);
+
+  @NativeQuery("""
+      SELECT
+      	s.settlement_id AS settlement_id,
+      	s.payer_member_id AS payer_id,
+      	payer.member_name AS payer_name,
+      	s.payee_member_id AS payee_id,
+      	payee.member_name AS payee_name,
+      	s.amount_paid AS amount_paid,
+      	s.currency AS currency,
+      	s.settlement_ts AS createdTs
+      FROM settlement s
+      JOIN member payer
+      	ON s.payer_member_id = payer.member_id
+      JOIN member payee
+      	ON s.payee_member_id = payee.member_id
+      WHERE s.group_id = ?1 AND s.currency = ?2
+      """)
+  List<SettlementsProjection> getAllSettlementsOfCurrency(UUID groupId, Currency currency);
 }

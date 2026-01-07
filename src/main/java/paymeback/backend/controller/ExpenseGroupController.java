@@ -13,9 +13,11 @@ import paymeback.backend.dto.response.MemberDebtDTO;
 import paymeback.backend.dto.response.GroupDetailsDTO;
 import paymeback.backend.dto.response.RecommendedSplitDTO;
 import paymeback.backend.dto.response.projections.AuditLogProjection;
+import paymeback.backend.dto.response.projections.SettlementsProjection;
 import paymeback.backend.service.AuditLogService;
 import paymeback.backend.service.ExpenseService;
 import paymeback.backend.service.GroupManagementService;
+import paymeback.backend.service.SettlementService;
 
 import java.util.Currency;
 import java.util.List;
@@ -28,11 +30,13 @@ public class ExpenseGroupController {
   private final GroupManagementService groupService;
   private final ExpenseService expenseService;
   private final AuditLogService auditLogService;
+  private final SettlementService settlementService;
 
-  public ExpenseGroupController(GroupManagementService groupService, ExpenseService expenseService, AuditLogService auditLogService) {
+  public ExpenseGroupController(GroupManagementService groupService, ExpenseService expenseService, AuditLogService auditLogService, SettlementService settlementService) {
     this.groupService = groupService;
     this.expenseService = expenseService;
     this.auditLogService = auditLogService;
+    this.settlementService = settlementService;
   }
 
   @PostMapping("/create")
@@ -123,6 +127,15 @@ public class ExpenseGroupController {
     List<RecommendedSplitDTO> recommendedSplitDTOs = this.expenseService.calculateRecommendedSplit(memberDebtDTOs);
 
     return new ResponseEntity<>(recommendedSplitDTOs, HttpStatus.OK);
+  }
+
+  @GetMapping("/{groupId}/settlements/{currency}")
+  public ResponseEntity<List<SettlementsProjection>> getSettlementsOfCurrency(
+      @PathVariable(name = "groupId") UUID groupId,
+      @PathVariable(name = "currency") Currency currency
+  ) {
+    List<SettlementsProjection> settlements = this.settlementService.getGroupSettlementsOfCurrency(groupId, currency);
+    return new ResponseEntity<>(settlements, HttpStatus.OK);
   }
 }
 

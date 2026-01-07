@@ -5,8 +5,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import paymeback.backend.domain.Settlement;
 import paymeback.backend.dto.request.CreateSettlementDTO;
+import paymeback.backend.dto.response.MemberDebtDTO;
+import paymeback.backend.service.ExpenseService;
 import paymeback.backend.service.SettlementService;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -14,9 +17,11 @@ import java.util.UUID;
 public class SettlementController {
 
   private final SettlementService settlementService;
+  private final ExpenseService expenseService;
 
-  public SettlementController(SettlementService settlementService) {
+  public SettlementController(SettlementService settlementService, ExpenseService expenseService) {
     this.settlementService = settlementService;
+    this.expenseService = expenseService;
   }
 
   @PostMapping

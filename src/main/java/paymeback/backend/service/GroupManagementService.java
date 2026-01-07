@@ -9,15 +9,18 @@ import paymeback.backend.domain.Member;
 import paymeback.backend.dto.request.CreateGroupAndMembersDTO;
 import paymeback.backend.dto.request.MemberDTO;
 import paymeback.backend.dto.response.GroupDetailsDTO;
+import paymeback.backend.dto.response.projections.SettlementsProjection;
 import paymeback.backend.exception.CannotDeleteWithActiveDebtException;
 import paymeback.backend.exception.GroupNotFoundException;
 import paymeback.backend.exception.MemberNotFoundException;
 import paymeback.backend.repository.ExpenseGroupRepository;
 import paymeback.backend.repository.ExpenseParticipantRepository;
 import paymeback.backend.repository.MemberRepository;
+import paymeback.backend.repository.SettlementRepository;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -55,7 +58,7 @@ public class GroupManagementService {
     ExpenseGroup expenseGroup = new ExpenseGroup();
     expenseGroup.setName(groupDTO.getGroupName());
     expenseGroup.setLinkToken(utilService.generateLinkToken(30));
-    expenseGroup.setExpiryTs(utilService.generateExpiryDate());
+    expenseGroup.setExpiryTs(ZonedDateTime.now().plusMonths(6).toInstant());
     try {
       expenseGroup.setDefaultCurrency(Currency.getInstance(groupDTO.getDefaultCurrency()));
       expenseGroupRepository.save(expenseGroup);

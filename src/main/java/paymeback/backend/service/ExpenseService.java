@@ -160,10 +160,8 @@ public class ExpenseService {
           memberDebtDTOs.add(memberDebtDTO);
         }
       }
-      return memberDebtDTOs;
-    } else {
-      return new ArrayList<>();
     }
+    return memberDebtDTOs;
   }
 
   //! This list expects an unsorted list of debts.
@@ -213,5 +211,14 @@ public class ExpenseService {
       recommendedSplitDTOs.add(dto);
     }
     return recommendedSplitDTOs;
+  }
+
+  public void archiveExpenses(UUID groupId) {
+    List<Expense> expenses = this.expenseRepository.findAllByGroupIdAndIsArchivedFalse(groupId);
+    for (Expense expense : expenses) {
+      expense.setArchived(true);
+      this.expenseRepository.save(expense);
+    }
+
   }
 }
