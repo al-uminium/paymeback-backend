@@ -26,6 +26,9 @@ public class ExpenseDTO {
   private BigDecimal totalCost;
 
   @NotNull
+  private Boolean isSplitEven;
+
+  @NotNull
   @Pattern(regexp = "[A-Z]{3}")
   private String currency;
 

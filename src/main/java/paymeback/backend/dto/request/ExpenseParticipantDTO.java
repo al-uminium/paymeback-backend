@@ -2,6 +2,7 @@ package paymeback.backend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 import org.springframework.validation.annotation.Validated;
 
@@ -14,6 +15,6 @@ public class ExpenseParticipantDTO {
   @NotBlank
   private UUID participantId;
 
-  @Positive
+  @PositiveOrZero
   private BigDecimal amountOwed;
 }

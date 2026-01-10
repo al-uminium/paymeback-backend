@@ -18,6 +18,7 @@ import paymeback.backend.repository.ExpenseRepository;
 import paymeback.backend.repository.MemberRepository;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 @Service
@@ -82,12 +83,24 @@ public class ExpenseService {
     return savedParticipants;
   }
 
+  private List<ExpenseParticipantDTO> setSplitAmountToDtos(List<ExpenseParticipantDTO> participantDTOS, BigDecimal totalCost) {
+    BigDecimal noOfParticipants = BigDecimal.valueOf(participantDTOS.size() + 1);
+    BigDecimal splitAmt = totalCost.divide(noOfParticipants, 2, RoundingMode.HALF_UP);
+    for (ExpenseParticipantDTO participant : participantDTOS) {
+      participant.setAmountOwed(splitAmt);
+    }
 
+    return participantDTOS;
+  }
 
   public ExpenseCreatedSummaryDTO createAndSaveExpense(ExpenseDTO expenseDTO, UUID actorId) {
     // save expense first, need id which is generated after saving.
     Expense expense = mapper.expenseDtoToExpense(expenseDTO);
     expense = this.expenseRepository.save(expense);
+    if (expenseDTO.getIsSplitEven()) {
+      List<ExpenseParticipantDTO> participantDTOs = this.setSplitAmountToDtos(expenseDTO.getParticipants(), expenseDTO.getTotalCost());
+      expenseDTO.setParticipants(participantDTOs);
+    }
     List<ExpenseParticipant> participants = saveToExpenseParticipants(expenseDTO.getParticipants(), expense.getId(), expenseDTO.getOwnerId());
     ExpenseCreatedSummaryDTO expenseCreatedSummaryDTO = new ExpenseCreatedSummaryDTO(expense, participants);
     this.auditLogService.createAndSaveAuditLog(expense.getGroupId(), actorId, EventType.EXPENSE_CREATED, "Expense was created.");
@@ -102,6 +115,10 @@ public class ExpenseService {
       // simplest way to deal with cases where instead of amount, they change the users who owe.
       this.expenseParticipantRepository.deleteAllByExpenseId(expenseId);
 
+      if (expenseDTO.getIsSplitEven()) {
+        List<ExpenseParticipantDTO> participantDTOs = this.setSplitAmountToDtos(expenseDTO.getParticipants(), expenseDTO.getTotalCost());
+        expenseDTO.setParticipants(participantDTOs);
+      }
       List<ExpenseParticipant> participants = this.saveToExpenseParticipants(expenseDTO.getParticipants(), expenseId, expenseDTO.getOwnerId());
       ExpenseCreatedSummaryDTO expenseCreatedSummaryDTO = new ExpenseCreatedSummaryDTO(expense, participants);
       this.auditLogService.createAndSaveAuditLog(expense.getGroupId(), actorId, EventType.EXPENSE_EDITED, "Expense was edited.");
