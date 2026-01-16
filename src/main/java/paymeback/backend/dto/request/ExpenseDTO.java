@@ -3,6 +3,7 @@ package paymeback.backend.dto.request;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import org.springframework.validation.annotation.Validated;
+import paymeback.backend.domain.SplitType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -26,7 +27,9 @@ public class ExpenseDTO {
   private BigDecimal totalCost;
 
   @NotNull
-  private Boolean isSplitEven;
+  private SplitType splitType;
+
+  private BigDecimal ownerPaidAmt; //this probably requires a custom validation -- only needs to be positive if splitType.PERCENT
 
   @NotNull
   @Pattern(regexp = "[A-Z]{3}")

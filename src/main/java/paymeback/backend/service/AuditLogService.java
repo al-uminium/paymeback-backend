@@ -37,6 +37,7 @@ public class AuditLogService {
 
   public List<AuditLogProjection> getGroupAuditLogs(UUID groupId) {
     if (groupRepository.existsById(groupId)) {
+      System.out.println("group found");
       return this.auditLogRepository.findAuditLogsByGroupId(groupId);
     } else {
       throw new GroupNotFoundException("Group of id " + groupId.toString() + " cannot be found");

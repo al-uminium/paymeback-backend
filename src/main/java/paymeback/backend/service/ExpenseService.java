@@ -97,7 +97,7 @@ public class ExpenseService {
     // save expense first, need id which is generated after saving.
     Expense expense = mapper.expenseDtoToExpense(expenseDTO);
     expense = this.expenseRepository.save(expense);
-    if (expenseDTO.getIsSplitEven()) {
+    if (expenseDTO.getSplitType().equals(SplitType.EVEN)) {
       List<ExpenseParticipantDTO> participantDTOs = this.setSplitAmountToDtos(expenseDTO.getParticipants(), expenseDTO.getTotalCost());
       expenseDTO.setParticipants(participantDTOs);
     }
@@ -115,10 +115,11 @@ public class ExpenseService {
       // simplest way to deal with cases where instead of amount, they change the users who owe.
       this.expenseParticipantRepository.deleteAllByExpenseId(expenseId);
 
-      if (expenseDTO.getIsSplitEven()) {
+      if (expenseDTO.getSplitType().equals(SplitType.EVEN)) {
         List<ExpenseParticipantDTO> participantDTOs = this.setSplitAmountToDtos(expenseDTO.getParticipants(), expenseDTO.getTotalCost());
         expenseDTO.setParticipants(participantDTOs);
       }
+
       List<ExpenseParticipant> participants = this.saveToExpenseParticipants(expenseDTO.getParticipants(), expenseId, expenseDTO.getOwnerId());
       ExpenseCreatedSummaryDTO expenseCreatedSummaryDTO = new ExpenseCreatedSummaryDTO(expense, participants);
       this.auditLogService.createAndSaveAuditLog(expense.getGroupId(), actorId, EventType.EXPENSE_EDITED, "Expense was edited.");

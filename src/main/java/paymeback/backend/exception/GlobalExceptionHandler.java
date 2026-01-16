@@ -1,5 +1,6 @@
 package paymeback.backend.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -11,6 +12,11 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<ApiError> handleBadRequest(IllegalArgumentException ex) {
+    return ResponseEntity.badRequest().body(new ApiError(400, ex.getMessage()));
+  }
+
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity<ApiError> handleInvalidParams(ConstraintViolationException ex) {
     return ResponseEntity.badRequest().body(new ApiError(400, ex.getMessage()));
   }
 

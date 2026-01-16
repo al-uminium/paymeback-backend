@@ -1,6 +1,8 @@
 package paymeback.backend.service;
 
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import paymeback.backend.domain.AuditLog;
 import paymeback.backend.domain.EventType;
@@ -23,7 +25,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @Service
 @Transactional
@@ -39,7 +40,7 @@ public class GroupManagementService {
 
   private final AuditLogService auditLogService;
 
-  private final Logger logger = Logger.getAnonymousLogger();
+  private final Logger logger = LoggerFactory.getLogger(GroupManagementService.class);
 
   public GroupManagementService(
       ExpenseGroupRepository expenseGroupRepository,
@@ -63,7 +64,7 @@ public class GroupManagementService {
       expenseGroup.setDefaultCurrency(Currency.getInstance(groupDTO.getDefaultCurrency()));
       expenseGroupRepository.save(expenseGroup);
     } catch (IllegalArgumentException ex) {
-      logger.log(Level.WARNING, "Exception occurred", ex);
+
       throw new IllegalArgumentException(ex.getMessage());
     }
     return expenseGroup;
@@ -83,7 +84,7 @@ public class GroupManagementService {
         members.add(member);
       }
     } catch (Exception ex) {
-      logger.log(Level.WARNING, "Exception occurred", ex);
+
       throw new Error("Unable to save");
     }
     return members;

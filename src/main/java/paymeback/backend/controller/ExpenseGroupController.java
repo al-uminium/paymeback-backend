@@ -1,7 +1,9 @@
 package paymeback.backend.controller;
 
+import jakarta.validation.constraints.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import paymeback.backend.domain.Expense;
 import paymeback.backend.domain.Member;
@@ -46,9 +48,12 @@ public class ExpenseGroupController {
   }
 
   // note: {{base-url}}/api/group/:token?asdasd=true will give includeMembers=false, idk how to sanitize it properly :(
-  @GetMapping("/{token:[a-zA-Z]{30}}")
+  @Validated
+  @GetMapping("/{token}")
   public ResponseEntity<GroupDetailsDTO> getGroupDetails(
-      @PathVariable("token") String token,
+      @PathVariable("token")
+      @Pattern(regexp = "[a-zA-Z]{30}", message = "Invalid token format")
+      String token,
       @RequestParam(name = "includeMembers", required = false) boolean includeMembers) {
 
     GroupDetailsDTO response = this.groupService.getGroupDetails(token, includeMembers);
@@ -113,6 +118,7 @@ public class ExpenseGroupController {
 
   @GetMapping("/{groupId}/logs")
   public ResponseEntity<List<AuditLogProjection>> getGroupAuditLogs(@PathVariable(name = "groupId") UUID groupId) {
+    System.out.println("Controller hit");
     List<AuditLogProjection> logs = this.auditLogService.getGroupAuditLogs(groupId);
 
     return new ResponseEntity<>(logs, HttpStatus.OK);
